@@ -186,7 +186,7 @@ class TeComment_Plugin implements Typecho_Plugin_Interface
 		$css = <<<EOT
 <style type="text/css">
 	#te-cmt-tool{display:none;list-style:none;margin:0;padding:10px 0;overflow:hidden;}
-	#te-cmt-cmd li{padding:0;margin:0;float:left;border:1px solid #ccc;border-right:none;}
+	#te-cmt-cmd li{padding:0;margin:0;float:left;border:1px solid #ccc;border-right:none;list-style:none;}
 	#te-cmt-cmd li:first-child{border-radius: 3px 0 0 3px;}
 	#te-cmt-cmd li:last-child{border-right:1px solid #ccc;border-radius: 0 3px 3px 0;}
 	#te-cmt-cmd li a{height:24px;line-height:24px;padding:0 10px;}
