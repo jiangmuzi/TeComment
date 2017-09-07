@@ -7,8 +7,10 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
  * @author 绛木子
  * @version 2.0.0
  * @link http://lixianhua.com
+ * 
  * 1、Ajax评论支持
- * 2、评论工具栏
+ * 2、评论异步加载
+ * 3、评论工具栏
  */
 class TeComment_Plugin implements Typecho_Plugin_Interface
 {
@@ -57,13 +59,16 @@ class TeComment_Plugin implements Typecho_Plugin_Interface
 		$gravatarDomain = new Typecho_Widget_Helper_Form_Element_Text('gravatarDomain', NULL, 'http://cn.gravatar.com', _t('头像地址'),_t('替换Typecho使用的Gravatar头像地址（ www.gravatar.com ）'));
 		$form->addInput($gravatarDomain);
 
-		$commentsAjax = new Typecho_Widget_Helper_Form_Element_Radio('commentsAjax', array(
+		$commentAjaxPost = new Typecho_Widget_Helper_Form_Element_Radio('commentAjaxPost', array(
         1=>'启用',0=>'禁用',), 0, _t('是否启用Ajax评论'),_t('启用Ajax评论后，评论信息将通过Ajax提交'));
-		$form->addInput($commentsAjax);
+		$form->addInput($commentAjaxPost);
 
-		$commentsAjaxLoad = new Typecho_Widget_Helper_Form_Element_Radio('commentsAjaxLoad', array(
+		$commentAjaxLoad = new Typecho_Widget_Helper_Form_Element_Radio('commentAjaxLoad', array(
         1=>'启用',0=>'禁用',), 0, _t('评论异步加载'),_t('启用后评论列表将通过Ajax异步加载'));
-		$form->addInput($commentsAjaxLoad);
+		$form->addInput($commentAjaxLoad);
+		
+		$commentAjaxLoadElement = new Typecho_Widget_Helper_Form_Element_Text('commentAjaxLoadElement', NULL, '#comment-ajax-list', _t('异步加载元素ID'),_t('默认为<code>#comment-ajax-list</code>,可根据模板具体内容进行xiug'));
+        $form->addInput($commentAjaxLoadElement);
 
 		// 评论分页
         $commentPrev = new Typecho_Widget_Helper_Form_Element_Text('commentPrev', NULL, '&laquo; 前一页', _t('上一页'),_t('启用评论异步加载时，评论分页的“上一页”文字'));
@@ -87,6 +92,9 @@ class TeComment_Plugin implements Typecho_Plugin_Interface
 		
 		$iconfont = new Typecho_Widget_Helper_Form_Element_Text('iconfont', NULL, '//at.alicdn.com/t/font_m7mp27xfc0jp2e29.css', _t('评论增强插件图标'), _t('默认使用<a href="http://www.iconfont.cn" target="_blank">iconfont</a>提供的在线图标服务'));
 		$form->addInput($iconfont);
+		
+		$style = new Typecho_Widget_Helper_Form_Element_Textarea('style', NULL, NULL, _t('评论增强插件样式'), _t('直接填写css样式；不需要使用 <code>style</code>标签'));
+		$form->addInput($style);
     }
     
     /**
@@ -146,7 +154,7 @@ class TeComment_Plugin implements Typecho_Plugin_Interface
 	 * @return void
 	 */
 	public static function finishComment($feedback){
-		if(Helper::options()->plugin('TeComment')->commentsAjax){
+		if(Helper::options()->plugin('TeComment')->commentAjaxPost){
 			$html = self::parseCommentHtml($feedback,'replyHidden=1');
 			$html = str_replace('>{children}<','><',$html);
 			$feedback->response->throwJson(array('status'=>1,'msg'=>'回复成功!','body'=>$html));
@@ -422,6 +430,9 @@ EOT;
 		$options = Helper::options();
         $plugin_path = Typecho_Common::url('TeComment', $options->pluginUrl);
 		$jquery = $options->plugin('TeComment')->jquery;
+		$commentAjaxPost = $options->plugin('TeComment')->commentAjaxPost ? 1 : 0;
+		$commentAjaxLoad = $options->plugin('TeComment')->commentAjaxLoad ? 1 : 0;
+		$commentAjaxLoadElement = $options->plugin('TeComment')->commentAjaxLoadElement;
 		$action = Typecho_Common::url('action',$options->index);
 		$current = $widget->getArchiveType();
 		// 引入Jquery
@@ -432,7 +443,7 @@ EOT;
 		
 		echo '<script>$(document).ready(function(){
 			window.token = '.$commentToken.'
-			TeCmt.init({action:"'.$action.'",current:"'.$current.'"});
+			TeCmt.init({action:"'.$action.'",current:"'.$current.'",commentAjaxPost:'.$commentAjaxPost.',commentAjaxLoad:'.$commentAjaxLoad.',commentAjaxLoadElement:"'.$commentAjaxLoadElement.'"});
 		});</script>';
 	}
 

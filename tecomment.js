@@ -3,20 +3,22 @@
 		options:{
             current:null,
             action:null,	    //网址
+			commentAjaxPost:false,
+			commentAjaxLoad:false,
+			commentAjaxLoadElement:'#comment-ajax-list',
         },
 		text:null,
 		tool:null,
         cmd:null,
         commentAjaxLoadElement:'#comment-ajax-list',
-        commentAjaxLoad:false,
         commentLoading:false,
 		init:function(options){
             $.extend(TeCmt.options,options);
             TeCmt.commentLoading = false;
-            if($(TeCmt.commentAjaxLoadElement).length >0){
-                TeCmt.commentAjaxLoad = true;
+            if($(TeCmt.options.commentAjaxLoadElement).length >0){
+                TeCmt.options.commentAjaxLoad = TeCmt.options.commentAjaxLoad;
             }else{
-                TeCmt.commentAjaxLoad = false;
+                TeCmt.options.commentAjaxLoad = false;
             }
             if('post' != TeCmt.options.current && 'page' != TeCmt.options.current){
                 return;
@@ -46,16 +48,18 @@
             $(window).scroll(function(){
                 TeCmt.windowScroll();
             });
-            TeCmt.initComment();
+			if(TeCmt.options.commentAjaxPost){
+				TeCmt.initComment();
+			}
             TeCmt.windowScroll();
         },
 		initComment:function(){
             var appendComment = function(html,parent){
-                if(TeCmt.commentAjaxLoad){
-                    var el = $(TeCmt.commentAjaxLoadElement).children('.comment-list');
+                if(TeCmt.options.commentAjaxLoad){
+                    var el = $(TeCmt.options.commentAjaxLoadElement).children('.comment-list');
                     if(0 == el.length){
-                        $(TeCmt.commentAjaxLoadElement).html('<ol class="comment-list"></ol>');
-                        el = $(TeCmt.commentAjaxLoadElement).children('.comment-list');
+                        $(TeCmt.options.commentAjaxLoadElement).html('<ol class="comment-list"></ol>');
+                        el = $(TeCmt.options.commentAjaxLoadElement).children('.comment-list');
                     }
                 }else{
                     var el = $('#comments > .comments-inner').children('.comment-list');
@@ -83,10 +87,13 @@
             }
             $('#comment-form').submit(function(e){
 				e.preventDefault();
-                var that = $(this);action = that.attr('action'), params = that.serialize(), parent = that.find('input[name=parent]').val();
-                if(action.indexOf('?')<0){
-                    action +='?_='+window.token;
-                }
+                var that = $(this), action = that.attr('action'), params = that.serialize(), parent = that.find('input[name=parent]').val(), tk = that.find('input[name=_]').val();
+				if((undefined === tk || TeCmt.options.commentAjaxLoad) && action.indexOf('?') < 0 ){
+					action +='?_='+window.token;
+				}
+				console.log(action);
+				console.log(params);
+				return false;
                 $.ajax({
                     url: action,
                     type: 'POST',
@@ -111,7 +118,8 @@
             });
         },
         LoadComment:function(){
-            var list = $(TeCmt.commentAjaxLoadElement), cid = list.data('cid'),num = list.data('num');
+			
+            var list = $(TeCmt.options.commentAjaxLoadElement), cid = list.data('cid'),num = list.data('num');
             if(0 == list.length || undefined == cid || 0 === num){
                 return false;
             }
@@ -138,7 +146,7 @@
             TeCmt.commentPage(url, commentPage);
         },
         commentPage:function(url, nowPage, replace){
-            var page = $(TeCmt.commentAjaxLoadElement).data('page');
+            var page = $(TeCmt.options.commentAjaxLoadElement).data('page');
             if('' === nowPage){
                 return false;
             }
@@ -156,7 +164,7 @@
             }
         },
         ajaxLoadComment:function(page){
-            var list = $(TeCmt.commentAjaxLoadElement), cid = list.data('cid');
+            var list = $(TeCmt.options.commentAjaxLoadElement), cid = list.data('cid');
             list.data('page', page);
             list.html('<div style="margin:100px auto;text-align:center;"><i class="icon icon-loading icon-large icon-pulse" title="加载中"></i></div>');
             $.get(TeCmt.options.action+'/TeComment?comment='+cid+'&commentPage='+page+'&_='+window.token,function(rs){
@@ -233,21 +241,23 @@
 			}
         },
         dialog:function(msg,type,time){
-            if(undefined === jApp){
-                alert(msg);
+			type = undefined == type ? 'success' : type;
+            if("undefined" == typeof jApp){
+                if('error' == type){
+					alert(msg);
+				}
             }else{
                 jApp.dialog(msg,type,time);
             }
         },
         windowScroll:function(){
-            if(TeCmt.commentAjaxLoad){
-                var height = $(window).height(), windowTop = document.body.scrollTop, listTop = $(TeCmt.commentAjaxLoadElement).offset().top;
-                if((windowTop+height) > listTop && false == TeCmt.commentLoading){
+            if(TeCmt.options.commentAjaxLoad){
+                var height = $(window).height(), windowTop = document.body.scrollTop, listTop = $(TeCmt.options.commentAjaxLoadElement).offset().top;
+                if( false == TeCmt.commentLoading && (windowTop+height) > listTop){
                     TeCmt.commentLoading = true;
                     TeCmt.LoadComment();
                 }
             }
-            
         }
 	}
 })(window);
