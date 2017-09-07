@@ -60,7 +60,7 @@ class TeComment_Plugin implements Typecho_Plugin_Interface
 		$form->addInput($gravatarDomain);
 
 		$commentAjaxPost = new Typecho_Widget_Helper_Form_Element_Radio('commentAjaxPost', array(
-        1=>'启用',0=>'禁用',), 0, _t('是否启用Ajax评论'),_t('启用Ajax评论后，评论信息将通过Ajax提交'));
+        1=>'启用',0=>'禁用',), 0, _t('是否启用Ajax提交评论'),_t('启用Ajax提交评论后，评论信息将通过Ajax提交'));
 		$form->addInput($commentAjaxPost);
 
 		$commentAjaxLoad = new Typecho_Widget_Helper_Form_Element_Radio('commentAjaxLoad', array(

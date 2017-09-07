@@ -91,9 +91,10 @@
 				if((undefined === tk || TeCmt.options.commentAjaxLoad) && action.indexOf('?') < 0 ){
 					action +='?_='+window.token;
 				}
-				console.log(action);
-				console.log(params);
-				return false;
+				if(TeCmt.options.commentAjaxLoad && undefined !== tk){
+					that.find('input[name=_]').remove();
+					params = that.serialize();
+				}
                 $.ajax({
                     url: action,
                     type: 'POST',
