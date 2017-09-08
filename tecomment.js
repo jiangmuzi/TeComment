@@ -6,20 +6,15 @@
 			commentAjaxPost:false,
 			commentAjaxLoad:false,
 			commentAjaxLoadElement:'#comment-ajax-list',
+            respondId:null,
         },
 		text:null,
 		tool:null,
         cmd:null,
-        commentAjaxLoadElement:'#comment-ajax-list',
         commentLoading:false,
 		init:function(options){
             $.extend(TeCmt.options,options);
             TeCmt.commentLoading = false;
-            if($(TeCmt.options.commentAjaxLoadElement).length >0){
-                TeCmt.options.commentAjaxLoad = TeCmt.options.commentAjaxLoad;
-            }else{
-                TeCmt.options.commentAjaxLoad = false;
-            }
             if('post' != TeCmt.options.current && 'page' != TeCmt.options.current){
                 return;
             }
@@ -48,10 +43,10 @@
             $(window).scroll(function(){
                 TeCmt.windowScroll();
             });
-			if(TeCmt.options.commentAjaxPost){
+			TeCmt.windowScroll();
+            if(TeCmt.options.commentAjaxPost){
 				TeCmt.initComment();
 			}
-            TeCmt.windowScroll();
         },
 		initComment:function(){
             var appendComment = function(html,parent){
@@ -100,7 +95,7 @@
                     type: 'POST',
                     data: params,
                     dataType: 'json',
-                    beforeSend: function() { that.find('.submit').addClass('loading').html('<i class="fa fa-spinner fa-pulse fa-spin"></i> 提交中...')},
+                    beforeSend: function() { that.find('.submit').addClass('loading').html('<i class="icon icon-loading icon-pulse"></i> 提交中...')},
                     complete: function() { that.find('.submit').removeClass('loading').html('提交评论')},
                     success: function(result){
                         if(result.status == 1){
@@ -119,7 +114,6 @@
             });
         },
         LoadComment:function(){
-			
             var list = $(TeCmt.options.commentAjaxLoadElement), cid = list.data('cid'),num = list.data('num');
             if(0 == list.length || undefined == cid || 0 === num){
                 return false;
@@ -136,9 +130,6 @@
             var url = window.location.href;
             if('' === commentPage){
                 commentPage = 1;
-                if('/' == url.substr(-1)){
-                    url = url.substr(0,url.length-1);
-                }
                 if( 0 < url.indexOf('#')){
                     url = url.substr(0,url.indexOf('#'));
                 }
@@ -252,7 +243,7 @@
             }
         },
         windowScroll:function(){
-            if(TeCmt.options.commentAjaxLoad){
+            if(TeCmt.options.commentAjaxLoad && $(TeCmt.options.commentAjaxLoadElement).length >0){
                 var height = $(window).height(), windowTop = document.body.scrollTop, listTop = $(TeCmt.options.commentAjaxLoadElement).offset().top;
                 if( false == TeCmt.commentLoading && (windowTop+height) > listTop){
                     TeCmt.commentLoading = true;
@@ -262,3 +253,57 @@
         }
 	}
 })(window);
+(function () {
+    window.TypechoComment = {
+        dom : function (id) {
+            return document.getElementById(id);
+        },
+        create : function (tag, attr) {
+            var el = document.createElement(tag);
+            for (var key in attr) {
+                el.setAttribute(key, attr[key]);
+            }
+            return el;
+        },
+        reply : function (cid, coid) {
+            var comment = this.dom(cid), parent = comment.parentNode,
+                response = this.dom(TeCmt.options.respondId), input = this.dom('comment-parent'),
+                form = 'form' == response.tagName ? response : response.getElementsByTagName('form')[0],
+                textarea = response.getElementsByTagName('textarea')[0];
+            if (null == input) {
+                input = this.create('input', {
+                    'type' : 'hidden',
+                    'name' : 'parent',
+                    'id'   : 'comment-parent'
+                });
+                form.appendChild(input);
+            }
+            input.setAttribute('value', coid);
+            if (null == this.dom('comment-form-place-holder')) {
+                var holder = this.create('div', {
+                    'id' : 'comment-form-place-holder'
+                });
+                response.parentNode.insertBefore(holder, response);
+            }
+            comment.appendChild(response);
+            this.dom('cancel-comment-reply-link').style.display = '';
+            if (null != textarea && 'text' == textarea.name) {
+                textarea.focus();
+            }
+            return false;
+        },
+        cancelReply : function () {
+            var response = this.dom(TeCmt.options.respondId),
+            holder = this.dom('comment-form-place-holder'), input = this.dom('comment-parent');
+            if (null != input) {
+                input.parentNode.removeChild(input);
+            }
+            if (null == holder) {
+                return true;
+            }
+            this.dom('cancel-comment-reply-link').style.display = 'none';
+            holder.parentNode.insertBefore(response, holder);
+            return false;
+        }
+    };
+})();
