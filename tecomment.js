@@ -1,7 +1,6 @@
 ﻿(function (w) {
 	w.TeCmt = {
 		options:{
-            current:null,
             action:null,	    //网址
 			commentAjaxPost:false,
 			commentAjaxLoad:false,
@@ -15,27 +14,21 @@
 		init:function(options){
             $.extend(TeCmt.options,options);
             TeCmt.commentLoading = false;
-            if('post' != TeCmt.options.current && 'page' != TeCmt.options.current){
-                return;
-            }
-			TeCmt.text = $('#textarea');
-			TeCmt.tool = $('#te-cmt-tool');
-			//显示工具栏
-			TeCmt.text.focus(function(){
-				TeCmt.tool.slideDown();
-			});
-			//点击文本框时关闭
-			TeCmt.text.click(function(){
-				TeCmt.tool.find('.te-cmt-smilies').slideUp();
-			});
-			//解析工具栏命令
-			$('#te-cmt-cmd a').click(function(){
-				TeCmt.cmd = $(this).data('cmd');
+            //显示工具栏
+            $(document).on('focus','#textarea',function(){
+                TeCmt.getTool().slideDown();
+            });
+            $(document).on('click','#textarea',function(){
+                TeCmt.getTool().find('.te-cmt-smilies').slideUp();
+            });
+            //解析工具栏命令
+            $(document).on('click','#te-cmt-cmd a',function(){
+                TeCmt.cmd = $(this).data('cmd');
 				TeCmt.parseCmd();
 				return false;
-			});
-			TeCmt.tool.find('.te-cmt-smilies span').click(function(){
-				var tag = $(this).data('tag');
+            });
+            $(document).on('click','#te-cmt-tool .te-cmt-smilies > span',function(){
+                var tag = $(this).data('tag');
 				TeCmt.write(tag);
 				return false;
             });
@@ -43,11 +36,17 @@
             $(window).scroll(function(){
                 TeCmt.windowScroll();
             });
+            // 兼容 pjax
+            $(document).on('pjax:end',function(){
+                TeCmt.windowScroll();
+            });
 			TeCmt.windowScroll();
             if(TeCmt.options.commentAjaxPost){
 				TeCmt.initComment();
 			}
         },
+        getText:function(){ return $('#textarea'); },
+        getTool:function(){ return $('#te-cmt-tool'); },
 		initComment:function(){
             var appendComment = function(html,parent){
                 if(TeCmt.options.commentAjaxLoad){
@@ -80,7 +79,7 @@
                 }
                 $(html).appendTo(el);
             }
-            $('#comment-form').submit(function(e){
+            $(document).on('submit','#comment-form', function(e){
 				e.preventDefault();
                 var that = $(this), action = that.attr('action'), params = that.serialize(), parent = that.find('input[name=parent]').val(), tk = that.find('input[name=_]').val();
 				if((undefined === tk || TeCmt.options.commentAjaxLoad) && action.indexOf('?') < 0 ){
@@ -189,7 +188,7 @@
 			}
 			switch(TeCmt.cmd){
 				case 'signin':TeCmt.write('签到成功！每日签到，生活更精彩哦~');break;
-				case 'smilies':TeCmt.tool.find('.te-cmt-smilies').slideToggle();break;
+				case 'smilies':TeCmt.getTool().find('.te-cmt-smilies').slideToggle();break;
 				case 'bold':TeCmt.write("<strong>", "</strong>");break;
 				case 'italic':TeCmt.write("<em>", "</em>");break;
 				case 'quote':TeCmt.write("<blockquote>", "</blockquote>");break;
@@ -207,7 +206,7 @@
 		},
 		write:function(l,r){
 			if(l===undefined) return false;
-			var el = TeCmt.text[0];
+			var el = TeCmt.getText()[0];
 			if (document.selection) {
 				el.focus();
 				sel = document.selection.createRange();
@@ -253,57 +252,3 @@
         }
 	}
 })(window);
-(function () {
-    window.TypechoComment = {
-        dom : function (id) {
-            return document.getElementById(id);
-        },
-        create : function (tag, attr) {
-            var el = document.createElement(tag);
-            for (var key in attr) {
-                el.setAttribute(key, attr[key]);
-            }
-            return el;
-        },
-        reply : function (cid, coid) {
-            var comment = this.dom(cid), parent = comment.parentNode,
-                response = this.dom(TeCmt.options.respondId), input = this.dom('comment-parent'),
-                form = 'form' == response.tagName ? response : response.getElementsByTagName('form')[0],
-                textarea = response.getElementsByTagName('textarea')[0];
-            if (null == input) {
-                input = this.create('input', {
-                    'type' : 'hidden',
-                    'name' : 'parent',
-                    'id'   : 'comment-parent'
-                });
-                form.appendChild(input);
-            }
-            input.setAttribute('value', coid);
-            if (null == this.dom('comment-form-place-holder')) {
-                var holder = this.create('div', {
-                    'id' : 'comment-form-place-holder'
-                });
-                response.parentNode.insertBefore(holder, response);
-            }
-            comment.appendChild(response);
-            this.dom('cancel-comment-reply-link').style.display = '';
-            if (null != textarea && 'text' == textarea.name) {
-                textarea.focus();
-            }
-            return false;
-        },
-        cancelReply : function () {
-            var response = this.dom(TeCmt.options.respondId),
-            holder = this.dom('comment-form-place-holder'), input = this.dom('comment-parent');
-            if (null != input) {
-                input.parentNode.removeChild(input);
-            }
-            if (null == holder) {
-                return true;
-            }
-            this.dom('cancel-comment-reply-link').style.display = 'none';
-            holder.parentNode.insertBefore(response, holder);
-            return false;
-        }
-    };
-})();

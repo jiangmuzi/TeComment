@@ -66,6 +66,10 @@ class TeComment_Plugin implements Typecho_Plugin_Interface
 		$commentAjaxLoad = new Typecho_Widget_Helper_Form_Element_Radio('commentAjaxLoad', array(
         1=>'启用',0=>'禁用',), 0, _t('评论异步加载'),_t('启用后评论列表将通过Ajax异步加载'));
 		$form->addInput($commentAjaxLoad);
+
+		$commentPjax = new Typecho_Widget_Helper_Form_Element_Radio('commentPjax', array(
+		1=>'兼容',0=>'不需要兼容',), 0, _t('是否兼容Pjax'),_t('是否需要兼容Pjax'));
+		$form->addInput($commentPjax);
 		
 		$commentAjaxLoadElement = new Typecho_Widget_Helper_Form_Element_Text('commentAjaxLoadElement', NULL, '#comment-ajax-list', _t('异步加载元素ID'),_t('默认为<code>#comment-ajax-list</code>,可根据模板具体内容进行xiug'));
         $form->addInput($commentAjaxLoadElement);
@@ -400,7 +404,7 @@ class TeComment_Plugin implements Typecho_Plugin_Interface
 	
 	// 插入插件样式
 	public static function insertCss($header,$widget){
-		if(!$widget->is('single')){
+		if(Helper::options()->plugin('TeComment')->commentPajx && !$widget->is('single')){
 			return;
 		}
 		$commentStyle = Helper::options()->plugin('TeComment')->style;
@@ -424,7 +428,7 @@ EOT;
 	
 	// 插入插件脚本
 	public static function insertJs($widget){
-		if(!$widget->is('single')){
+		if(Helper::options()->plugin('TeComment')->commentPajx && !$widget->is('single')){
 			return;
 		}
 		$options = Helper::options();
@@ -434,7 +438,6 @@ EOT;
 		$commentAjaxLoad = $options->plugin('TeComment')->commentAjaxLoad ? 1 : 0;
 		$commentAjaxLoadElement = $options->plugin('TeComment')->commentAjaxLoadElement;
 		$action = Typecho_Common::url('action',$options->index);
-		$current = $widget->getArchiveType();
 		// 引入Jquery
 		echo '<script>!window.jQuery && document.write("<script src=\"'.$jquery.'\">"+"</scr"+"ipt>");</script><script src="'.$plugin_path.'/tecomment.js"></script>';
 		// 初始化脚本
@@ -443,7 +446,7 @@ EOT;
 		
 		echo '<script>$(document).ready(function(){
 			window.token = '.$commentToken.'
-			TeCmt.init({action:"'.$action.'",current:"'.$current.'",commentAjaxPost:'.$commentAjaxPost.',commentAjaxLoad:'.$commentAjaxLoad.',commentAjaxLoadElement:"'.$commentAjaxLoadElement.'"});
+			TeCmt.init({action:"'.$action.'",commentAjaxPost:'.$commentAjaxPost.',commentAjaxLoad:'.$commentAjaxLoad.',commentAjaxLoadElement:"'.$commentAjaxLoadElement.'"});
 		});</script>';
 	}
 
